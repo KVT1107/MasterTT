@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department of English (UAP) - Master Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #07080a;
+            --card-bg: rgba(16, 18, 22, 0.65);
+            --border-color: rgba(33, 38, 48, 0.6);
+            --gold-light: #ffeb99;
+            --gold-main: #d4af37;
+            --gold-dark: #aa7c11;
+            --gold-gradient: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%);
+            --gold-glow: rgba(212, 175, 55, 0.3);
+            --text-main: #f0f2f5;
+            --text-muted: #8c9bad;
+            --alert-red: #ef4444;
+            --alert-red-glow: rgba(239, 68, 68, 0.25);
+            --specular-top: rgba(255, 235, 153, 0.2);
+            --shadow-bottom: rgba(0, 0, 0, 0.9);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            perspective: 1200px;
+            position: relative;
+        }
+
+        /* --- AMBIENT BREATHING AURORA & NOISE OVERLAY --- */
+        .aurora-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -2; overflow: hidden; pointer-events: none;
+            background-color: var(--bg-deep);
+        }
+        .aurora-blob {
+            position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.12;
+            animation: aurora-drift 22s infinite alternate ease-in-out;
+        }
+        .blob-1 { width: 55vw; height: 55vw; background: #d4af37; top: -15%; left: -10%; }
+        .blob-2 { width: 65vw; height: 65vw; background: #1a233a; bottom: -20%; right: -10%; animation-delay: -5s; }
+        
+        @keyframes aurora-drift { 
+            0% { transform: translate(0, 0) scale(1); } 
+            100% { transform: translate(8vw, 12vh) scale(1.15); } 
+        }
+
+        .noise-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: -1; opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        h1, h2, h3, .unit-title {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            transform-style: preserve-3d;
+            z-index: 1;
+        }
+
+        /* SPECULAR GLASSMORPHISM CARDS */
+        header, .card, .nav-tabs, .syllabus-unit-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-top: 1px solid var(--specular-top);
+            border-bottom: 1px solid var(--shadow-bottom);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        header {
+            text-align: center; margin-bottom: 12px; padding: 20px; border-radius: 16px;
+        }
+        header h1 {
+            margin: 0; background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: 1.6rem; letter-spacing: 0.5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); line-height: 1.3; font-weight: 700;
+        }
+        header p { margin: 6px 0 0; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; font-weight: 500; }
+
+        .header-datetime-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(16, 18, 22, 0.6); border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 8px 16px; border-radius: 10px; margin-bottom: 8px; font-size: 0.85rem; color: var(--gold-light);
+            box-shadow: inset 0 0 10px rgba(212, 175, 55, 0.08); font-family: 'Outfit', sans-serif;
+        }
+
+        .semester-progress-container {
+            width: 100%; height: 6px; background: #0d0f14; border-radius: 3px;
+            border: 1px solid rgba(212, 175, 55, 0.12); margin-bottom: 15px; overflow: hidden; position: relative; box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+        }
+        .semester-progress-bar {
+            height: 100%; width: 0%; background: var(--gold-gradient); border-radius: 3px; position: relative;
+            box-shadow: 0 0 12px var(--gold-main), inset 0 1px 1px rgba(255,255,255,0.6); transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .semester-progress-bar::after {
+            content: ''; position: absolute; top: 0; right: 0; width: 6px; height: 100%; background: #ffffff;
+            box-shadow: 0 0 8px 2px #fffbdf, 0 0 15px var(--gold-main); border-radius: 50%;
+        }
+
+        .nav-tabs {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px;
+            padding: 6px; border-radius: 12px; position: relative; overflow: hidden;
+        }
+        @media (max-width: 700px) { .nav-tabs { grid-template-columns: repeat(2, 1fr); } }
+        .nav-tab {
+            background: transparent; border: none; color: var(--text-muted); padding: 12px 6px;
+            font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 0.85rem; border-radius: 8px; cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); text-align: center; position: relative; z-index: 1;
+        }
+        .nav-tab:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.02); }
+        .nav-tab.active {
+            background: var(--gold-gradient); color: #07080a; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            border: 1px solid var(--gold-main); box-shadow: 0 0 16px var(--gold-glow), inset 0 1px 2px rgba(255,255,255,0.3);
+        }
+
+        .page-content { display: none; opacity: 0; transform: translateX(-15px) rotateX(8deg) translateY(25px) scale(0.98); transform-origin: top center; }
+        .page-content.active { display: block; animation: extravagantEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes extravagantEntrance {
+            0% { opacity: 0; transform: translateX(-15px) rotateX(8deg) translateY(25px) scale(0.98); filter: brightness(0.6); }
+            100% { opacity: 1; transform: translateX(0px) rotateX(0deg) translateY(0) scale(1); filter: brightness(1); }
+        }
+
+        .card { padding: 22px; border-radius: 14px; margin-bottom: 20px; overflow-x: auto; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+        .card:hover { border-color: rgba(212, 175, 55, 0.35); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.08); transform: translateY(-2px); }
+
+        .live-status { border-left: 4px solid var(--gold-main); }
+        .live-status.urgent-alert {
+            border-left: 4px solid var(--alert-red); border-top-color: var(--alert-red);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 15px var(--alert-red-glow); animation: pulse-border 2s infinite;
+        }
+        @keyframes pulse-border { 0% { border-left-color: var(--alert-red); } 50% { border-left-color: #fca5a5; } 100% { border-left-color: var(--alert-red); } }
+
+        .selector-label { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+        .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        @media (max-width: 650px) { .controls-grid { grid-template-columns: 1fr; gap: 15px; } }
+
+        /* MAGNETIC SLIDERS & ELASTIC REBOUND */
+        .slider-wrapper { position: relative; padding-top: 15px; padding-bottom: 5px; }
+        .gold-slider {
+            -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; outline: none;
+            border: 1px solid var(--border-color); border-top: 1px solid rgba(0,0,0,0.8); border-bottom: 1px solid rgba(255,255,255,0.1);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+            background: linear-gradient(90deg, var(--gold-main) var(--slider-percent, 0%), #0d0f14 var(--slider-percent, 0%));
+        }
+        .gold-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 30px; height: 30px; border-radius: 50%;
+            background-color: #101216; border: 2px solid var(--gold-main);
+            box-shadow: 0 0 12px var(--gold-glow), inset 0 0 5px rgba(255,255,255,0.15); cursor: pointer;
+            background-position: center; background-repeat: no-repeat; background-size: 16px 16px;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+        }
+        .gold-slider::-webkit-slider-thumb:active { transform: scale(0.9); box-shadow: 0 0 25px rgba(212, 175, 55, 0.8); }
+        .gold-slider::-webkit-slider-thumb:hover { transform: scale(1.15); box-shadow: 0 0 18px rgba(212, 175, 55, 0.6), inset 0 0 8px rgba(255,255,255,0.3); }
+
+        .day-slider::-webkit-slider-thumb { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E"); }
+        .hour-slider::-webkit-slider-thumb { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpolyline points='12 6 12 12 16 14'%3E%3C/polyline%3E%3C/svg%3E"); }
+
+        .slider-labels { display: flex; justify-content: space-between; margin-top: 14px; padding: 0 8px; }
+        .slider-labels span { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; text-align: center; width: 20px; }
+        .slider-labels span.active { color: var(--gold-light); text-shadow: 0 0 10px var(--gold-glow); transform: scale(1.25) translateY(-2px); }
+
+        .day-pills, .staff-matrix-grid { display: grid; gap: 6px; }
+        .day-pills { grid-template-columns: repeat(6, 1fr); }
+        .staff-matrix-grid { grid-template-columns: repeat(7, 1fr); }
+        @media (max-width: 650px) { .staff-matrix-grid { grid-template-columns: repeat(5, 1fr); } }
+
+        .day-pill, .staff-pill, .class-chip {
+            background: rgba(21, 24, 33, 0.8); border: 1px solid var(--border-color); color: var(--text-muted);
+            text-align: center; border-radius: 8px; font-weight: 600; cursor: pointer; position: relative; overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(0,0,0,0.6);
+        }
+        .day-pill { padding: 10px 0; font-size: 0.9rem; }
+        .staff-pill { padding: 9px 4px; font-size: 0.85rem; }
+        .class-chip { padding: 9px 14px; font-size: 0.88rem; }
+        .day-pill:hover, .staff-pill:hover, .class-chip:hover { border-color: var(--gold-main); color: var(--text-main); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .day-pill.active, .staff-pill.active, .class-chip.active {
+            background: var(--gold-gradient); color: #07080a; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            border: 1px solid var(--gold-main); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 0 18px var(--gold-glow);
+            font-weight: 700; animation: classySnap 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .active-faculty-badge { margin-top: 10px; font-size: 0.85rem; color: var(--gold-light); font-weight: 500; display: flex; align-items: center; gap: 6px; }
+        .year-selector-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; background: rgba(13, 15, 20, 0.8); padding: 6px; border-radius: 10px; border: 1px solid var(--border-color); border-top: 1px solid rgba(0,0,0,0.8); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+        .year-tab { background: transparent; border: 1px solid transparent; color: var(--text-muted); padding: 10px 6px; text-align: center; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .year-tab:hover { color: var(--text-main); background: rgba(255,255,255,0.03); }
+        .year-tab.active { background: var(--gold-gradient); color: #07080a; -webkit-background-clip: text; -webkit-text-fill-color: transparent; border: 1px solid var(--gold-main); box-shadow: 0 0 12px var(--gold-glow); }
+        .year-panel { display: none; animation: panelFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .year-panel.active { display: block; }
+        @keyframes panelFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .class-chips-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 0.9rem; }
+        th, td { padding: 12px; text-align: center; border: 1px solid var(--border-color); }
+        th { background-color: rgba(21, 24, 33, 0.8); background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        .time-sub { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; font-family: 'Outfit', monospace; letter-spacing: 0.5px;}
+
+        .highlighted-column { position: relative; background: linear-gradient(90deg, rgba(212, 175, 55, 0.05) 0%, rgba(255, 235, 153, 0.15) 50%, rgba(212, 175, 55, 0.05) 100%) !important; background-size: 200% 100% !important; animation: cyberpunkLaserSweep 2.5s linear infinite, rowGlowPulse 2s ease-in-out infinite alternate !important; border-top: 2px solid var(--gold-main) !important; border-bottom: 2px solid var(--gold-main) !important; box-shadow: inset 0 0 25px rgba(255, 235, 153, 0.15), 0 0 15px rgba(212, 175, 55, 0.2); }
+        @keyframes cyberpunkLaserSweep { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        td.active-class-cell { background: linear-gradient(135deg, rgba(255, 225, 100, 0.35) 0%, rgba(180, 130, 10, 0.3) 100%) !important; border: 2px solid #fffbdf !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; font-weight: 800; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9); box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.4), 0 0 25px var(--gold-main) !important; animation: activeCellLaserPunch 1.2s infinite alternate !important; }
+
+        .daily-list, .free-staff-list { list-style: none; padding: 0; margin: 5px 0 0 0; }
+        .daily-list li, .free-staff-list li { padding: 10px 4px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
+        .daily-list li:last-child, .free-staff-list li:last-child { border-bottom: none; }
+        .gold-text { background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 600; }
+        
+        /* --- SYLLABUS TRACKER PAGE 4 --- */
+        .syllabus-unit-container { margin-top: 15px; border-radius: 12px; overflow: hidden; transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .unit-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; cursor: pointer; background: rgba(255, 255, 255, 0.015); transition: all 0.3s ease; }
+        .unit-header:hover { background: rgba(255, 255, 255, 0.04); }
+        .unit-header.open { border-bottom: 1px solid var(--border-color); background: rgba(212, 175, 55, 0.04); }
+        .unit-title { color: var(--gold-light); font-size: 1.15rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+        
+        .unit-progress-track { display: flex; gap: 4px; height: 4px; flex: 1; margin: 0 20px; max-width: 200px; align-items: center;}
+        .progress-segment { flex: 1; height: 100%; background: rgba(0,0,0,0.5); border-radius: 2px; transition: all 0.4s ease; box-shadow: inset 0 1px 1px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.05); }
+        .progress-segment.filled { background: var(--gold-gradient); box-shadow: 0 0 8px rgba(212, 175, 55, 0.6); border: none; height: 6px;}
+        .unit-toggle-icon { color: var(--text-muted); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .unit-header.open .unit-toggle-icon { transform: rotate(180deg); color: var(--gold-light); }
+        
+        .topic-grid-wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .topic-grid-wrapper.open { grid-template-rows: 1fr; }
+        .topic-grid-inner { overflow: hidden; }
+        .topic-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; padding: 16px; }
+
+        .topic-card { background: rgba(13, 15, 20, 0.6); border: 1px solid var(--border-color); border-top: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; display: flex; align-items: flex-start; gap: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.01), 0 4px 6px rgba(0,0,0,0.3); }
+        .topic-card:hover { border-color: rgba(212, 175, 55, 0.3); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.5); }
+        
+        /* THE ARCANE CORE SELECTOR */
+        .topic-icon { 
+            width: 20px; height: 20px; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.25); 
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0; 
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); margin-top: 2px; position: relative; 
+        }
+        .topic-icon::before {
+            content: ''; position: absolute; width: 4px; height: 4px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); transition: all 0.4s ease;
+        }
+        .topic-text { color: var(--text-muted); font-size: 0.92rem; line-height: 1.4; font-weight: 400; transition: color 0.3s; }
+        
+        .topic-card.completed { background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(13,15,20,0.8) 100%); border-color: var(--gold-main); box-shadow: inset 0 0 15px rgba(212, 175, 55, 0.08), 0 4px 15px rgba(0,0,0,0.5); border-top: 1px solid var(--gold-light); }
+        
+        .topic-card.completed .topic-icon { 
+            border: 2px solid var(--gold-main); border-style: solid; transform: rotate(180deg);
+            box-shadow: 0 0 15px var(--gold-glow), inset 0 0 8px rgba(212, 175, 55, 0.4); 
+        }
+        .topic-card.completed .topic-icon::before {
+            width: 10px; height: 10px; background: var(--gold-light); box-shadow: 0 0 12px var(--gold-main);
+        }
+        .topic-card.completed .topic-text { color: #ffffff; font-weight: 500; }
+
+        /* 100% BLOOM ANIMATION */
+        .unit-completed-bloom { animation: unitBloom 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes unitBloom {
+            0% { box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7); border-color: var(--border-color); }
+            30% { box-shadow: inset 0 0 40px rgba(212,175,55,0.2), 0 0 35px rgba(212,175,55,0.4); border-color: var(--gold-light); transform: scale(1.02); }
+            100% { box-shadow: inset 0 0 10px rgba(212,175,55,0.05), 0 15px 35px rgba(0,0,0,0.7); border-color: rgba(212,175,55,0.4); transform: scale(1); }
+        }
+
+        footer { text-align: center; margin-top: 30px; padding-bottom: 10px; color: var(--text-muted); font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; }
+        footer span { background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<!-- Ambient Aurora & Noise Layers -->
+<div class="aurora-bg">
+    <div class="aurora-blob blob-1"></div>
+    <div class="aurora-blob blob-2"></div>
+</div>
+<div class="noise-overlay"></div>
+
+<div class="container" id="mainContainer">
+    <header>
+        <h1>Department of English (UAP)<br><span style="font-size: 1.2rem; font-family: 'Outfit', sans-serif; font-weight: 400; color:var(--text-muted); letter-spacing: 1px;">National College (A), Tiruchirappalli</span></h1>
+        <p>Master Faculty Timetable Portal</p>
+    </header>
+
+    <div class="header-datetime-bar">
+        <span id="headerDateStr">--</span>
+        <span id="headerTimeStr" style="font-weight: 700; color: #fff;">--:--:--</span>
+    </div>
+
+    <div class="semester-progress-container">
+        <div class="semester-progress-bar" id="semesterProgressBar"></div>
+    </div>
+
+    <div class="nav-tabs" id="navTabsContainer">
+        <button class="nav-tab active" onclick="switchPage(1)">1. Faculty View</button>
+        <button class="nav-tab" onclick="switchPage(2)">2. Free Hour Finder</button>
+        <button class="nav-tab" onclick="switchPage(3)">3. Class-in-Charge</button>
+        <button class="nav-tab" onclick="switchPage(4)">4. Syllabus Tracker</button>
+    </div>
+
+    <!-- PAGE 1 -->
+    <div id="page1" class="page-content active">
+        <div class="card" id="facultyCardContainer">
+            <div style="margin-bottom: 14px;">
+                <span class="selector-label">Active Day Order</span>
+                <div class="day-pills" id="dayPillsContainer">
+                    <div class="day-pill" onclick="selectDay('1')">I</div>
+                    <div class="day-pill" onclick="selectDay('2')">II</div>
+                    <div class="day-pill" onclick="selectDay('3')">III</div>
+                    <div class="day-pill" onclick="selectDay('4')">IV</div>
+                    <div class="day-pill" onclick="selectDay('5')">V</div>
+                    <div class="day-pill" onclick="selectDay('6')">VI</div>
+                </div>
+            </div>
+
+            <div>
+                <span class="selector-label">Faculty Member (Initials)</span>
+                <div class="staff-matrix-grid" id="staffPillsContainer"></div>
+                <div class="active-faculty-badge" id="activeFacultyBadge">Selected: <strong style="color:#fff;" id="activeFacultyFullName">Mr. Theja K V</strong></div>
+            </div>
+        </div>
+
+        <div class="card live-status" id="liveCard">
+            <h3 style="margin-top:0; display: flex; align-items: center; gap: 8px;" id="liveCardTitle" class="gold-text">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 6px var(--gold-glow));">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                Live Status
+            </h3>
+            <p id="liveStatusText" style="margin-bottom:0; line-height: 1.5;">Initializing...</p>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0;" class="gold-text" id="gridTitle">Master Overview</h3>
+            <table id="masterTable">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Hour I<br><span class="time-sub">8:30-9:25</span></th>
+                        <th>Hour II<br><span class="time-sub">9:25-10:20</span></th>
+                        <th>Hour III<br><span class="time-sub">10:20-11:15</span></th>
+                        <th>Hour IV<br><span class="time-sub">11:35-12:30</span></th>
+                        <th>Hour V<br><span class="time-sub">12:30-1:25</span></th>
+                    </tr>
+                </thead>
+                <tbody id="masterTableBody"></tbody>
+            </table>
+        </div>
+        
+        <!-- Shortened standard cards for brevity (Classes In Charge & Light Schedule remain unchanged structurally) -->
+        <div class="card">
+            <h3 style="margin-top:0;" class="gold-text">Classes in Charge</h3>
+            <p id="classesInChargeText" style="margin-bottom:0; font-size: 1.05rem; font-weight: 500; color: var(--text-main);">-</p>
+        </div>
+        <div class="card">
+            <h3 style="margin-top:0;" class="gold-text">★ Light Schedule Staff</h3>
+            <p style="color:var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">Faculty with only 2 hours scheduled on Day Order <span id="lightScheduleDayLabel">I</span>:</p>
+            <ul class="daily-list" id="page1LightScheduleList"></ul>
+        </div>
+    </div>
+
+    <!-- PAGE 2 -->
+    <div id="page2" class="page-content">
+        <div class="card">
+            <h3 style="margin-top:0;" class="gold-text">Free Hour Finder</h3>
+            <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Drag the sliders to instantly check available faculty members across any Day Order and Hour.</p>
+            
+            <div class="controls-grid" style="margin-bottom: 25px;">
+                <div class="slider-container">
+                    <span class="selector-label">Day Order</span>
+                    <div class="slider-wrapper">
+                        <input type="range" id="freeFinderDay" min="1" max="6" value="1" class="gold-slider day-slider" oninput="updateSliderWake(this); updateFreeFinder()">
+                        <div class="slider-labels" id="daySliderLabels">
+                            <span class="active">I</span><span>II</span><span>III</span><span>IV</span><span>V</span><span>VI</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slider-container">
+                    <span class="selector-label">Hour Slot</span>
+                    <div class="slider-wrapper">
+                        <input type="range" id="freeFinderHour" min="1" max="5" value="1" class="gold-slider hour-slider" oninput="updateSliderWake(this); updateFreeFinder()">
+                        <div class="slider-labels" id="hourSliderLabels">
+                            <span class="active">I</span><span>II</span><span>III</span><span>IV</span><span>V</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <h4 id="freeFinderCount" style="margin: 0 0 10px 0; color: var(--text-main); font-family: 'Playfair Display', serif;">Available Faculty</h4>
+                <ul class="free-staff-list" id="freeStaffList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 3 -->
+    <div id="page3" class="page-content">
+        <div class="card">
+            <h3 style="margin-top:0;" class="gold-text">Class-in-Charge Directory</h3>
+            <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Select an academic year tier below, then tap a class to inspect its faculty in-charge.</p>
+
+            <div class="year-selector-tabs">
+                <button class="year-tab active" onclick="switchYearTier('1')">I YEAR</button>
+                <button class="year-tab" onclick="switchYearTier('2')">II YEAR</button>
+                <button class="year-tab" onclick="switchYearTier('3')">III YEAR &amp; NME</button>
+            </div>
+
+            <div id="yearPanel1" class="year-panel active">
+                <span class="selector-label" style="margin-top: 12px; margin-bottom: 8px;">First Year Classes</span>
+                <div class="class-chips-grid" id="classChipsI"></div>
+            </div>
+            <div id="yearPanel2" class="year-panel">
+                <span class="selector-label" style="margin-top: 12px; margin-bottom: 8px;">Second Year Classes</span>
+                <div class="class-chips-grid" id="classChipsII"></div>
+            </div>
+            <div id="yearPanel3" class="year-panel">
+                <span class="selector-label" style="margin-top: 12px; margin-bottom: 8px;">Third Year, NME &amp; Special Modules</span>
+                <div class="class-chips-grid" id="classChipsIII"></div>
+            </div>
+
+            <div id="classSpotlight" class="card" style="display: none; background: rgba(212, 175, 55, 0.05); margin-top:20px;">
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);">Selected Class</span>
+                <h2 id="spotlightClassTitle" style="margin: 5px 0 10px 0; font-size: 1.5rem;" class="gold-text">—</h2>
+                <div style="font-size: 0.95rem; color: var(--text-muted);">Faculty In-Charge:</div>
+                <div id="spotlightStaffName" style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-top: 4px;">—</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 4: SYLLABUS TRACKER -->
+    <div id="page4" class="page-content">
+        <div class="card">
+            <h3 style="margin-top:0;" class="gold-text">Interactive Syllabus Tracker</h3>
+            <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Tap a faculty member, select a class, and open units to check off completed topics.</p>
+            
+            <span class="selector-label">Select Faculty</span>
+            <div class="staff-matrix-grid" id="p4StaffContainer" style="margin-bottom: 15px;"></div>
+
+            <div id="p4ClassSection" style="display: none;">
+                <span class="selector-label" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">Select Class (Eligible only)</span>
+                <div class="class-chips-grid" id="p4ClassChipsContainer" style="margin-bottom: 15px;"></div>
+            </div>
+        </div>
+
+        <div class="card" id="p4SyllabusCard" style="display: none;">
+            <h3 style="margin-top:0; margin-bottom: 5px;" class="gold-text" id="p4SyllabusTitle">Class Syllabus</h3>
+            <p style="color:var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;" id="p4SyllabusSubtitle">Viewing topics for Class</p>
+            
+            <div id="p4SyllabusContent">
+                <!-- Syllabus retractable units inject here -->
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Created by <span>Theja K V</span>
+    </footer>
+</div>
+
+<script>
+    // --- Data Dictionaries (Unchanged) ---
+    const facultyInitialsMapping = [
+        { fullName: "Dr. Anusooya P", initial: "PA" }, { fullName: "Mr. Gopi G", initial: "GG" }, { fullName: "Dr. Vasuki S", initial: "SV" },
+        { fullName: "Mr. Vijay Joshua Alen P", initial: "VJ" }, { fullName: "Ms. Rajalakshmi S", initial: "SR" }, { fullName: "Dr. Sudha M", initial: "MS" },
+        { fullName: "Ms. Parimala K G", initial: "GP" }, { fullName: "Mr. M. Jagadeesh", initial: "JM" }, { fullName: "Mr. Theja K V", initial: "KVT" },
+        { fullName: "Mr. Sudharsan Karthik T", initial: "SK" }, { fullName: "Mr. Vimal Raj T A", initial: "VR" }, { fullName: "Mr. Daniel Devaraj S", initial: "DA" }, { fullName: "Mrs. Abirami N", initial: "NA" }
+    ];
+
+    const timeSlots = [
+        { hourKey: "I", timeStr: "08:30 - 09:25", start: 830, end: 925 }, { hourKey: "II", timeStr: "09:25 - 10:20", start: 925, end: 1020 },
+        { hourKey: "III", timeStr: "10:20 - 11:15", start: 1020, end: 1115 }, { hourKey: "IV", timeStr: "11:35 - 12:30", start: 1135, end: 1230 }, { hourKey: "V", timeStr: "12:30 - 1:25", start: 1230, end: 1325 }
+    ];
+
+    const lightScheduleData = { "1": ["Vasuki", "Sudharshan Karthik"], "2": ["Parimala", "Jagadeesh"], "3": ["Gopi", "Vijay", "Vimal"], "4": [], "5": ["Rajalakshmi", "Abirami"], "6": ["Gopi", "Vasuki", "Sudha", "Daniel"] };
+
+    const facultyDatabase = {
+        "Dr. Anusooya P": { classesInCharge: "II B VOC, II BCA A", timetable: { "1": { "I": "II BCA A", "II": "Free", "III": "Free", "IV": "Free", "V": "Free" }, "2": { "I": "Free", "II": "Free", "III": "Free", "IV": "II B VOC", "V": "II BCA A" }, "3": { "I": "Free", "II": "Free", "III": "II BCA A", "IV": "Free", "V": "Free" }, "4": { "I": "Free", "II": "Free", "III": "Free", "IV": "II B VOC", "V": "Free" }, "5": { "I": "Free", "II": "Free", "III": "Free", "IV": "Free", "V": "Free" }, "6": { "I": "Free", "II": "Free", "III": "Free", "IV": "II BCA A", "V": "Free" } } },
+        "Mr. Gopi G": { classesInCharge: "II AVI, I AI ML, BT SS", timetable: { "1": { "I": "II AVI", "II": "Free", "III": "I AI ML", "IV": "BT SS", "V": "Free" }, "2": { "I": "Free", "II": "I AI ML", "III": "Free", "IV": "II DS", "V": "I BCOM CA'C'" }, "3": { "I": "I AI ML", "II": "Free", "III": "II AVI", "IV": "Free", "V": "Free" }, "4": { "I": "I CS B", "II": "Free", "III": "II AVI", "IV": "I AI ML", "V": "Free" }, "5": { "I": "II AVI", "II": "Free", "III": "I AI ML", "IV": "BT SS", "V": "Free" }, "6": { "I": "Free", "II": "Free", "III": "Free", "IV": "I CS B", "V": "I AI ML" } } },
+        "Dr. Vasuki S": { classesInCharge: "II BCOM A, II CS B, I BCOM A", timetable: { "1": { "I": "II BCOM A", "II": "Free", "III": "II CS B", "IV": "Free", "V": "Free" }, "2": { "I": "II BCOM CA'C'", "II": "Free", "III": "II BCOM A", "IV": "Free", "V": "I BCOM A" }, "3": { "I": "II CS B", "II": "II BCOM A", "III": "Free", "IV": "I CS A", "V": "Free" }, "4": { "I": "Free", "II": "II CS B", "III": "II BCOM A", "IV": "Free", "V": "I BCOM A" }, "5": { "I": "II BCOM A", "II": "Free", "III": "I BCOM A", "IV": "Free", "V": "II CS C" }, "6": { "I": "Free", "II": "I BCOM A", "III": "Free", "IV": "II CS B", "V": "Free" } } },
+        "Mr. Vijay Joshua Alen P": { classesInCharge: "I CS C, II BCOM B, II IT", timetable: { "1": { "I": "I BCOM CA'B'", "II": "Free", "III": "II BCOM B", "IV": "Free", "V": "I CS C" }, "2": { "I": "I CS C", "II": "II BCOM B", "III": "Free", "IV": "II CS B", "V": "Free" }, "3": { "I": "II BCOM B", "II": "Free", "III": "Free", "IV": "Free", "V": "II IT" }, "4": { "I": "Free", "II": "II BCOM B", "III": "II IT", "IV": "Free", "V": "I BCOM CA'B'" }, "5": { "I": "II BCOM B", "II": "I CS C", "III": "Free", "IV": "Free", "V": "II IT" }, "6": { "I": "II IT", "II": "II BCOM B", "III": "Free", "IV": "I CS C", "V": "Free" } } },
+        "Ms. Rajalakshmi S": { classesInCharge: "I BCA, I BCOM CA'A', II BT + MB", timetable: { "1": { "I": "Free", "II": "II BT + MB", "III": "Free", "IV": "I BT + MB", "V": "I BCA" }, "2": { "I": "Free", "II": "Free", "III": "I BCOM CA'A'", "IV": "I BCA", "V": "II BT + MB" }, "3": { "I": "I BCOM CA'A'", "II": "I CS C", "III": "II BT + MB", "IV": "Free", "V": "Free" }, "4": { "I": "I BCOM CA'A'", "II": "I CS C", "III": "Free", "IV": "II BT + MB", "V": "Free" }, "5": { "I": "Free", "II": "Free", "III": "I BCA", "IV": "Free", "V": "II BT + MB" }, "6": { "I": "I BCOM CA'A'", "II": "Free", "III": "Free", "IV": "I BCA", "V": "II BCA B" } } },
+        "Dr. Sudha M": { classesInCharge: "I BBA, I AVI, II CS A", timetable: { "1": { "I": "Free", "II": "II CS A", "III": "I BBA", "IV": "I AVI", "V": "Free" }, "2": { "I": "II CS A", "II": "Free", "III": "I BBA", "IV": "I BCOM B", "V": "Free" }, "3": { "I": "Free", "II": "I BBA", "III": "II CS A", "IV": "I BCA", "V": "Free" }, "4": { "I": "I AVI", "II": "II CS A", "III": "Free", "IV": "Free", "V": "I BCOM B" }, "5": { "I": "I BBA", "II": "Free", "III": "I AVI", "IV": "II CS A", "V": "Free" }, "6": { "I": "Free", "II": "Free", "III": "Free", "IV": "II CS A", "V": "I AVI" } } },
+        "Ms. Parimala K G": { classesInCharge: "II BCOM CA'A', II BCOM CA'B'", timetable: { "1": { "I": "Free", "II": "Free", "III": "II BCOM CA'B'", "IV": "Free", "V": "II BCOM CA'A'" }, "2": { "I": "Free", "II": "II BCOM CA'A'", "III": "Free", "IV": "Free", "V": "Free" }, "3": { "I": "Free", "II": "Free", "III": "II BCOM CA'B'", "IV": "Free", "V": "II BCOM CA'C'" }, "4": { "I": "Free", "II": "Free", "III": "II BCA A", "IV": "I BCOM CA'C'", "V": "Free" }, "5": { "I": "Free", "II": "Free", "III": "Free", "IV": "II BCOM CA'B'", "V": "II BCOM CA'A'" }, "6": { "I": "Free", "II": "Free", "III": "Free", "IV": "II BCOM CA'A'", "V": "II BCOM CA'B'" } } },
+        "Mr. M. Jagadeesh": { classesInCharge: "I B COM B, I DS, I B VOC, NME", timetable: { "1": { "I": "I BCOM B", "II": "Free", "III": "Free", "IV": "I IT + DS", "V": "II IT" }, "2": { "I": "Free", "II": "Free", "III": "I IT + DS", "IV": "NME", "V": "Free" }, "3": { "I": "Free", "II": "I BCOM B", "III": "Free", "IV": "I B VOC", "V": "I IT + DS" }, "4": { "I": "Free", "II": "Free", "III": "I BBA", "IV": "NME", "V": "I B VOC" }, "5": { "I": "Free", "II": "Free", "III": "I BCOM B", "IV": "II CS B", "V": "II BCA A" }, "6": { "I": "Free", "II": "I BCOM B", "III": "Free", "IV": "I IT + DS", "V": "I BBA" } } },
+        "Mr. Theja K V": { classesInCharge: "II CS C, II BMS+ STAT+ BM, I IT", timetable: { "1": { "I": "Free", "II": "II BMS+ STAT+ BM", "III": "II CS C", "IV": "Free", "V": "Free" }, "2": { "I": "Free", "II": "II CS C", "III": "I AVI", "IV": "Free", "V": "II BMS+STAT +BM" }, "3": { "I": "II CS C", "II": "Free", "III": "II BMS+ STAT+ BM", "IV": "Free", "V": "I AVI" }, "4": { "I": "I IT + DS", "II": "Free", "III": "Free", "IV": "II STAT+ BM", "V": "II DS" }, "5": { "I": "Free", "II": "I STAT+ BMS+ BM", "III": "Free", "IV": "I IT + DS", "V": "II BMS+ STAT+ BM" }, "6": { "I": "II BMS+ STAT+ BM", "II": "Free", "III": "II CS C", "IV": "Free", "V": "II DS" } } },
+        "Mr. Sudharsan Karthik T": { classesInCharge: "I BT + MB, II BCA B, NME", timetable: { "1": { "I": "Free", "II": "II BCA B", "III": "Free", "IV": "Free", "V": "I BCOM CA'A'" }, "2": { "I": "II BCA B", "II": "Free", "III": "I BT + MB", "IV": "NME", "V": "Free" }, "3": { "I": "Free", "II": "I BCOM CA'A'", "III": "II BCA B", "IV": "Free", "V": "I BT + MB" }, "4": { "I": "I BT + MB", "II": "Free", "III": "II BCA B", "IV": "NME", "V": "Free" }, "5": { "I": "II BCOM C", "II": "I BT + MB", "III": "Free", "IV": "Free", "V": "II BCA B" }, "6": { "I": "II BT + MB", "II": "Free", "III": "Free", "IV": "I BT + MB", "V": "II BBA" } } },
+        "Mr. Vimal Raj T A": { classesInCharge: "I CS A, I CS B, II DS", timetable: { "1": { "I": "Free", "II": "II DS", "III": "Free", "IV": "I STAT + BMS + BM", "V": "I CS B" }, "2": { "I": "I CS A", "II": "II AVI", "III": "Free", "IV": "I CS B", "V": "Free" }, "3": { "I": "Free", "II": "II DS", "III": "Free", "IV": "I CS B", "V": "Free" }, "4": { "I": "Free", "II": "II CS C + BMS", "III": "I CS A", "IV": "Free", "V": "I BCA" }, "5": { "I": "II DS", "II": "I CS A", "III": "Free", "IV": "I CS B", "V": "Free" }, "6": { "I": "Free", "II": "II BCOM A", "III": "I CS A", "IV": "Free", "V": "II AVI" } } },
+        "Mr. Daniel Devaraj S": { classesInCharge: "I BCOM CA'C', I STAT+ BMS+ BM, II BBA", timetable: { "1": { "I": "Free", "II": "II BCOM C", "III": "Free", "IV": "I BCOM CA'C'", "V": "II BBA" }, "2": { "I": "II BCOM CA'B'", "II": "II BBA", "III": "I STAT+ BMS+ BM", "IV": "Free", "V": "Free" }, "3": { "I": "Free", "II": "Free", "III": "II BBA", "IV": "I BCOM CA'C'", "V": "I STAT+ BMS+ BM" }, "4": { "I": "I STAT+ BMS+ BM", "II": "II BCOM CA'A'", "III": "II BBA", "IV": "Free", "V": "Free" }, "5": { "I": "II BBA", "II": "I BCOM CA'C'", "III": "Free", "IV": "I BCOM CA'A'", "V": "Free" }, "6": { "I": "Free", "II": "Free", "III": "I BCOM CA'C'", "IV": "I STAT+ BMS+ BM", "V": "Free" } } },
+        "Mrs. Abirami N": { classesInCharge: "I BCOM CA'B', II BCOM C, II BCOM CA'C'", timetable: { "1": { "I": "I BCOM A", "II": "II BCOM CA'C'", "III": "Free", "IV": "Free", "V": "I CS A" }, "2": { "I": "II BCOM C", "II": "II IT", "III": "Free", "IV": "I BCOM CA'B'", "V": "Free" }, "3": { "I": "Free", "II": "I BCOM A", "III": "I BCOM CA'B'", "IV": "II BCOM C", "V": "Free" }, "4": { "I": "II BCOM CA'B'", "II": "II BCOM CA'C'", "III": "Free", "IV": "Free", "V": "II BCOM C" }, "5": { "I": "II BCOM CA'C'", "II": "I BCOM CA'B'", "III": "Free", "IV": "Free", "V": "Free" }, "6": { "I": "Free", "II": "II BCOM CA'C'", "III": "II BCOM C", "IV": "Free", "V": "I BCOM CA'B'" } } }
+    };
+
+    const syllabusDatabase = {
+        "I": [
+            { unit: "UNIT 1", topics: ["1.1 Chapter 1 from Malala Yousafzai, I am Malala", "1.2 An Autobiography or The Story of My Experiments with Truth (Ch. 1,2&3) M.K.Gandhi", "1.3 Where the Mind is Without Fear - Gitanjali 35 - Rabindranath Tagore", "1.4 Love Cycle - Chinua Achebe"] },
+            { unit: "UNIT 2", topics: ["2.1 Nine Gold Medals - David Roth", "2.2 Alice Fell or poverty - William Wordsworth", "2.3 The School for Sympathy - E.V. Lucas", "2.4 Barn Burning - William Faulkner"] },
+            { unit: "UNIT 3", topics: ["3.1 The Things That Haven't Been Done Before - Edgar Guest", "3.2 Stopping by the Woods on a Snowy Evening - Robert Frost", "3.3 The Magic Brocade - A Tale of China - Aaron Shepard", "3.4 Three Sideway Stories from Wayside School - Louis Sachar"] },
+            { unit: "UNIT 4", topics: ["4.1 Articles", "4.2 Noun", "4.3 Pronoun", "4.4 Verb", "4.5 Adverb", "4.6 Adjective", "4.7 Preposition"] },
+            { unit: "UNIT 5", topics: ["5.1 Descriptive Paragraph", "5.2 Expository Paragraph", "5.3 Persuasive Paragraph", "5.4 Narrative Paragraph and Reading Comprehension"] }
+        ],
+        "II": [
+            { unit: "UNIT 1", topics: ["1.1 In a Grove - Akutagawa Ryunosuke", "1.2 The Gift of the Magi - O'Henry", "1.3 Listening - Robin Sharma", "1.4 Nobel Prize Acceptance Speech - Wangari Maathai"] },
+            { unit: "UNIT 2", topics: ["2.1 Telephone Conversation - Wole Soyinka", "2.2 Of Friendship - Francis Bacon", "2.3 Ulysses - Alfred Lord Tennyson", "2.4 And Still I Rise - Maya Angelou"] },
+            { unit: "UNIT 3", topics: ["3.1 Leisure - W.H.Davies", "3.2 Anxiety Monster - Rhona McFerran", "3.3 The Forty Fortunes: A Tale of Iran", "3.4 Where there is a Will - Mahesh Dattani"] },
+            { unit: "UNIT 4", topics: ["4.1 Phrasal Verbs & Idioms", "4.2 Modals and Auxiliaries", "4.3 Verb Phrases - Gerund, Participle, Infinitive"] },
+            { unit: "UNIT 5", topics: ["5.1 Official Correspondence - Leave, Application, Permission Letter", "5.2 Drafting Invitations", "5.3 Brochures for Programmes and Events"] }
+        ]
+    };
+
+    let activeDay = "1";
+    let activeFaculty = "Mr. Theja K V";
+    let p4ActiveFaculty = null;
+    let p4ActiveClass = null;
+
+    function initApp() {
+        let savedDay = localStorage.getItem("dept_timetable_day");
+        const savedFaculty = localStorage.getItem("dept_timetable_faculty");
+
+        if (!savedDay) { savedDay = "1"; localStorage.setItem("dept_timetable_day", savedDay); }
+        activeDay = savedDay;
+        if (savedFaculty && facultyDatabase[savedFaculty]) { activeFaculty = savedFaculty; }
+
+        populateStaffMatrix();
+        updateSliderWake(document.getElementById("freeFinderDay"));
+        updateSliderWake(document.getElementById("freeFinderHour"));
+        
+        initSyllabusTracker(); 
+        renderApp();
+        updateFreeFinder();
+        populateClassDirectory();
+        updateRealtimeClock();
+        updateSemesterProgress();
+        setInterval(updateRealtimeClock, 1000);
+    }
+
+    // --- Core UI Functions ---
+    function updateSliderWake(slider) {
+        const val = slider.value;
+        const min = slider.min ? slider.min : 1;
+        const max = slider.max ? slider.max : 100;
+        const percentage = ((val - min) / (max - min)) * 100;
+        slider.style.setProperty("--slider-percent", `${percentage}%`);
+
+        const labels = slider.nextElementSibling.querySelectorAll('span');
+        labels.forEach((lbl, index) => {
+            if (index === (val - 1)) { lbl.classList.add("active"); } 
+            else { lbl.classList.remove("active"); }
+        });
+    }
+
+    function switchPage(pageNum) {
+        const navContainer = document.getElementById("navTabsContainer");
+        navContainer.classList.remove("shimmer"); void navContainer.offsetWidth; navContainer.classList.add("shimmer");
+        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(`page${pageNum}`).classList.add('active');
+        document.querySelectorAll('.nav-tab')[pageNum - 1].classList.add('active');
+    }
+
+    // --- Clock & Progress ---
+    function updateRealtimeClock() {
+        const now = new Date();
+        const optionsDate = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+        document.getElementById("headerDateStr").innerText = now.toLocaleDateString('en-US', optionsDate);
+        document.getElementById("headerTimeStr").innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function updateSemesterProgress() {
+        const start = new Date(2026, 5, 16); const end = new Date(2026, 9, 31); const now = new Date();
+        let percentage = ((now - start) / (end - start)) * 100;
+        document.getElementById("semesterProgressBar").style.width = Math.min(Math.max(percentage, 0), 100) + "%";
+    }
+
+    // --- PAGE 1 LOGIC ---
+    function selectDay(dayStr) { activeDay = dayStr; localStorage.setItem("dept_timetable_day", activeDay); renderApp(); }
+    
+    function populateStaffMatrix() {
+        const container = document.getElementById("staffPillsContainer"); container.innerHTML = "";
+        facultyInitialsMapping.forEach(item => {
+            const pill = document.createElement("div"); pill.className = "staff-pill"; pill.innerText = item.initial; pill.title = item.fullName;
+            pill.onclick = () => changeFaculty(item.fullName, pill);
+            if (item.fullName === activeFaculty) { pill.classList.add("active"); } container.appendChild(pill);
+        });
+    }
+
+    function changeFaculty(fullName, pillEl) {
+        activeFaculty = fullName; localStorage.setItem("dept_timetable_faculty", activeFaculty);
+        document.querySelectorAll('#page1 .staff-pill').forEach(p => p.classList.remove('active')); if (pillEl) { pillEl.classList.add('active'); }
+        renderApp();
+    }
+
+    function renderApp() {
+        document.querySelectorAll('#page1 .day-pill').forEach((pill, idx) => { if ((idx + 1).toString() === activeDay) { pill.classList.add('active'); } else { pill.classList.remove('active'); } });
+        document.querySelectorAll('#page1 .staff-pill').forEach(pill => { const matchedItem = facultyInitialsMapping.find(m => m.initial === pill.innerText); if (matchedItem && matchedItem.fullName === activeFaculty) { pill.classList.add('active'); } else { pill.classList.remove('active'); } });
+        document.getElementById("activeFacultyFullName").innerText = activeFaculty;
+
+        const currentMinutes = new Date().getHours() * 100 + new Date().getMinutes();
+        const currentFacultyData = facultyDatabase[activeFaculty];
+        const tbody = document.getElementById("masterTableBody"); tbody.innerHTML = "";
+
+        for (let day = 1; day <= 6; day++) {
+            const dayStr = day.toString(); const row = document.createElement("tr"); const isSelectedRow = (dayStr === activeDay);
+            let rowHTML = `<td><strong>Day ${["I","II","III","IV","V","VI"][day-1]}</strong></td>`;
+
+            timeSlots.forEach(slot => {
+                const course = (currentFacultyData.timetable[dayStr] && currentFacultyData.timetable[dayStr][slot.hourKey]) ? currentFacultyData.timetable[dayStr][slot.hourKey] : "Free";
+                let cellClass = isSelectedRow ? " highlighted-column" : "";
+                if (isSelectedRow && currentMinutes >= slot.start && currentMinutes <= slot.end) { cellClass += " active-class-cell"; }
+                rowHTML += `<td class="${cellClass.trim()} ${course === "Free" ? 'free-slot' : ''}">${course}</td>`;
+            });
+            row.innerHTML = rowHTML; tbody.appendChild(row);
+        }
+
+        document.getElementById("gridTitle").innerText = `${activeFaculty} - Master Overview`;
+        document.getElementById("classesInChargeText").innerText = currentFacultyData.classesInCharge;
+        
+        document.getElementById("lightScheduleDayLabel").innerText = ["I","II","III","IV","V","VI"][activeDay-1];
+        const lightListEl = document.getElementById("page1LightScheduleList"); lightListEl.innerHTML = "";
+        const lightStaffKeywords = lightScheduleData[activeDay] || [];
+        if (lightStaffKeywords.length === 0) { lightListEl.innerHTML = `<li><span style="color:var(--text-muted); font-style:italic;">---- none ----</span></li>`; } 
+        else { lightStaffKeywords.forEach(k => { const match = Object.keys(facultyDatabase).find(n => n.includes(k)) || k; lightListEl.innerHTML += `<li><span class="gold-text"><strong>${match}</strong></span> <span class="light-schedule-badge">2 Hours Today</span></li>`; }); }
+
+        updateLiveStatus(currentFacultyData.timetable[activeDay] || {}, currentMinutes);
+    }
+
+    function updateLiveStatus(dailyData, currentMinutes) {
+        const liveText = document.getElementById("liveStatusText"); const liveCard = document.getElementById("liveCard");
+        liveCard.classList.remove("urgent-alert");
+        document.getElementById("liveCardTitle").innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 6px var(--gold-glow));"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> Live Status (${activeFaculty})`;
+
+        if (new Date().getDay() === 0 || new Date().getDay() === 6) { liveText.innerHTML = `Today is a <span class="gold-text" style="font-weight: 700;">Holiday</span>. Enjoy your weekend!`; return; }
+
+        let activeSlot = null, nextClassSlot = null;
+        for (let s of timeSlots) { if (currentMinutes >= s.start && currentMinutes <= s.end) { activeSlot = s; break; } }
+        for (let s of timeSlots) { if (s.start > currentMinutes && (dailyData[s.hourKey] || "Free") !== "Free") { nextClassSlot = s; break; } }
+
+        if ((!activeSlot && nextClassSlot && nextClassSlot.start - currentMinutes <= 5) || (activeSlot && activeSlot.end - currentMinutes <= 5 && nextClassSlot)) {
+            liveCard.classList.add("urgent-alert");
+            document.getElementById("liveCardTitle").innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <span style="color:#ef4444;">Upcoming Class Alert!</span>`;
+            liveText.innerHTML = `Faculty: <strong style="color:var(--text-main);">${activeFaculty}</strong><br>Upcoming: <strong>Hour ${nextClassSlot.hourKey}</strong> (${nextClassSlot.timeStr}) — <span style="color:#ef4444">${dailyData[nextClassSlot.hourKey]}</span> starting soon!`;
+            return;
+        }
+
+        if (activeSlot) {
+            const course = dailyData[activeSlot.hourKey] || "Free";
+            if (course === "Free") { liveText.innerHTML = `Currently (Hour ${activeSlot.hourKey}): <span style="color:var(--text-muted)">Free Hour</span>` + (nextClassSlot ? `<br>Next: <strong>Hour ${nextClassSlot.hourKey}</strong> — <span class="gold-text">${dailyData[nextClassSlot.hourKey]}</span>` : ""); }
+            else { liveText.innerHTML = `Ongoing Class (Hour ${activeSlot.hourKey}): <span class="gold-text" style="font-size:1.05rem;">${course}</span>`; }
+        } else if (nextClassSlot) { liveText.innerHTML = `No class right now. Next: <strong>Hour ${nextClassSlot.hourKey}</strong> (${nextClassSlot.timeStr}) — <span class="gold-text">${dailyData[nextClassSlot.hourKey]}</span>`; } 
+        else { liveText.innerHTML = `No more teaching classes scheduled for today.`; }
+    }
+
+    // --- PAGE 2 LOGIC ---
+    function updateFreeFinder() {
+        const daySliderVal = document.getElementById("freeFinderDay").value;
+        const hourSliderVal = parseInt(document.getElementById("freeFinderHour").value);
+        const selectedHour = ["I", "II", "III", "IV", "V"][hourSliderVal - 1];
+        
+        let freeStaffCount = 0; let staffHtml = "";
+        for (let [facultyName, data] of Object.entries(facultyDatabase)) {
+            if (facultyName === "Dr. Anusooya P" || (facultyName === "Ms. Parimala K G" && (selectedHour === "I" || selectedHour === "II"))) continue;
+            if ((data.timetable[daySliderVal] || {})[selectedHour] === "Free" || !(data.timetable[daySliderVal] || {})[selectedHour]) {
+                freeStaffCount++; staffHtml += `<li><span class="gold-text"><strong>${facultyName}</strong></span> <span style="color:var(--text-muted); font-size:0.85rem;">Free Hour</span></li>`;
+            }
+        }
+        document.getElementById("freeFinderCount").innerText = `Available Faculty (${freeStaffCount} Staff Free)`;
+        document.getElementById("freeStaffList").innerHTML = staffHtml || `<li><span style="color:var(--text-muted); font-style:italic;">No faculty free during this hour.</span></li>`;
+    }
+
+    // --- PAGE 3 LOGIC ---
+    function switchYearTier(tierNum) {
+        document.querySelectorAll('.year-tab').forEach(t => t.classList.remove('active')); document.querySelectorAll('.year-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.year-tab')[tierNum - 1].classList.add('active'); document.getElementById(`yearPanel${tierNum}`).classList.add('active');
+    }
+    
+    function populateClassDirectory() {
+        const c1 = document.getElementById("classChipsI"), c2 = document.getElementById("classChipsII"), c3 = document.getElementById("classChipsIII");
+        let cmap = { "NME": "Mr. M. Jagadeesh / Mr. Sudharsan Karthik", "BT SS": "Mr. Gopi G" };
+        for (let [fn, d] of Object.entries(facultyDatabase)) { if (d.classesInCharge) d.classesInCharge.split(",").forEach(c => { if(c.trim()) cmap[c.trim()] = fn; }); }
+        
+        Object.keys(cmap).sort().forEach(cls => {
+            const chip = document.createElement("div"); chip.className = "class-chip"; chip.innerText = cls; chip.onclick = () => selectClassChip(cls, cmap[cls], chip);
+            if (cls.toUpperCase().startsWith("II")) c2.appendChild(chip); else if (cls.toUpperCase().startsWith("I")) c1.appendChild(chip); else c3.appendChild(chip);
+        });
+    }
+
+    function selectClassChip(className, facultyName, chipEl) {
+        document.querySelectorAll('#page3 .class-chip').forEach(c => c.classList.remove('active')); chipEl.classList.add('active');
+        document.getElementById("classSpotlight").style.display = "block"; document.getElementById("spotlightClassTitle").innerText = className; document.getElementById("spotlightStaffName").innerText = facultyName;
+    }
+
+    // --- PAGE 4 LOGIC (SYLLABUS & 100% BLOOM) ---
+    function initSyllabusTracker() {
+        const cont = document.getElementById("p4StaffContainer");
+        facultyInitialsMapping.forEach(item => {
+            const pill = document.createElement("div"); pill.className = "staff-pill"; pill.innerText = item.initial; pill.onclick = () => selectP4Staff(item.fullName, pill); cont.appendChild(pill);
+        });
+    }
+
+    function selectP4Staff(facultyName, pillEl) {
+        p4ActiveFaculty = facultyName; p4ActiveClass = null;
+        document.querySelectorAll('#p4StaffContainer .staff-pill').forEach(p => p.classList.remove('active')); pillEl.classList.add('active');
+        document.getElementById("p4SyllabusCard").style.display = "none";
+        
+        const cc = document.getElementById("p4ClassChipsContainer"); cc.innerHTML = ""; let added = false;
+        if (facultyDatabase[facultyName].classesInCharge) {
+            facultyDatabase[facultyName].classesInCharge.split(",").forEach(c => {
+                c = c.trim(); if (c === "BT SS" || c === "NME") return; added = true;
+                const chip = document.createElement("div"); chip.className = "class-chip"; chip.innerText = c; chip.onclick = () => selectP4Class(c, chip); cc.appendChild(chip);
+            });
+        }
+        document.getElementById("p4ClassSection").style.display = "block";
+        if (!added) cc.innerHTML = `<div style="color:var(--text-muted); font-style:italic;">No eligible classes for syllabus tracking.</div>`;
+    }
+
+    function selectP4Class(className, chipEl) {
+        p4ActiveClass = className; document.querySelectorAll('#p4ClassChipsContainer .class-chip').forEach(c => c.classList.remove('active')); chipEl.classList.add('active'); renderSyllabus();
+    }
+
+    function renderSyllabus() {
+        document.getElementById("p4SyllabusTitle").innerText = `${p4ActiveClass} Syllabus`; document.getElementById("p4SyllabusSubtitle").innerHTML = `Faculty: <strong style="color:var(--text-main);">${p4ActiveFaculty}</strong>`;
+        document.getElementById("p4SyllabusCard").style.display = "block"; const content = document.getElementById("p4SyllabusContent"); content.innerHTML = "";
+        
+        const tier = p4ActiveClass.toUpperCase().startsWith("II") ? "II" : "I"; const syl = syllabusDatabase[tier];
+        if (!syl || !syl.length) { content.innerHTML = `<div class="empty-syllabus-msg">Syllabus data not found.</div>`; return; }
+
+        syl.forEach((uData, uIdx) => {
+            const tTotal = uData.topics.length;
+            const uc = document.createElement("div"); uc.className = "syllabus-unit-container";
+            const hdr = document.createElement("div"); hdr.className = "unit-header";
+            const track = document.createElement("div"); track.className = "unit-progress-track";
+            for (let i=0; i<tTotal; i++) track.appendChild(Object.assign(document.createElement("div"), {className: "progress-segment"}));
+            
+            hdr.innerHTML = `<div class="unit-title">${uData.unit}</div>`; hdr.appendChild(track);
+            hdr.innerHTML += `<div class="unit-toggle-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg></div>`;
+            uc.appendChild(hdr);
+
+            const wrap = document.createElement("div"); wrap.className = "topic-grid-wrapper";
+            const grid = document.createElement("div"); grid.className = "topic-grid";
+            
+            let cCount = 0;
+            uData.topics.forEach((tTxt, tIdx) => {
+                const key = `Syl_${p4ActiveFaculty}_${p4ActiveClass}_U${uIdx}_T${tIdx}`.replace(/\s+/g, '_');
+                const isC = localStorage.getItem(key) === "true"; if (isC) cCount++;
+                
+                const card = document.createElement("div"); card.className = `topic-card ${isC ? 'completed' : ''}`;
+                card.onclick = (e) => {
+                    e.stopPropagation(); const nowC = card.classList.contains('completed');
+                    if (nowC) { card.classList.remove('completed'); localStorage.setItem(key, "false"); cCount--; } 
+                    else { card.classList.add('completed'); localStorage.setItem(key, "true"); cCount++; }
+                    updateProgressUI(uc, track.parentElement.querySelector('.unit-progress-track'), cCount, tTotal);
+                };
+                card.innerHTML = `<div class="topic-icon"></div><div class="topic-text">${tTxt}</div>`; grid.appendChild(card);
+            });
+
+            updateProgressUI(uc, hdr.querySelector('.unit-progress-track'), cCount, tTotal);
+            hdr.onclick = () => { wrap.classList.toggle('open'); hdr.classList.toggle('open'); };
+            
+            const inner = document.createElement("div"); inner.className = "topic-grid-inner"; inner.appendChild(grid);
+            wrap.appendChild(inner); uc.appendChild(wrap); content.appendChild(uc);
+        });
+    }
+
+    function updateProgressUI(unitContainer, trackEl, completed, total) {
+        trackEl.querySelectorAll('.progress-segment').forEach((seg, idx) => {
+            if (idx < completed) seg.classList.add('filled'); else seg.classList.remove('filled');
+        });
+        
+        // Trigger Bloom Animation only if freshly hitting 100%
+        if (completed === total && total > 0) {
+            unitContainer.classList.add('unit-completed-bloom');
+        } else {
+            unitContainer.classList.remove('unit-completed-bloom');
+        }
+    }
+
+    initApp();
+</script>
+
+</body>
+</html>
